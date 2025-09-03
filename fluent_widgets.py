@@ -2,9 +2,10 @@ from PySide6 import QtCore, QtGui, QtWidgets
 
 class FluentButton(QtWidgets.QPushButton):
     def __init__(self, text="", icon: QtGui.QIcon | None = None, *args, **kwargs):
-        super().__init__(text, *args, **kwargs)
         if icon:
-            self.setIcon(icon)
+            super().__init__(icon, text, *args, **kwargs)
+        else:
+            super().__init__(text, *args, **kwargs)
         self.setCursor(QtCore.Qt.PointingHandCursor)
         self.setMinimumHeight(40)
         self.setStyleSheet("""
@@ -27,7 +28,7 @@ class LogBox(QtWidgets.QPlainTextEdit):
     def __init__(self):
         super().__init__()
         self.setReadOnly(True)
-        self.setLineWrapMode(QtWidgets.QPlainTextEdit.WidgetWidth)
+        self.setLineWrapMode(QtWidgets.QPlainTextEdit.LineWrapMode.WidgetWidth)
         self.setStyleSheet("""
             QPlainTextEdit {
                 background: rgba(255,255,255,0.7);
@@ -37,7 +38,11 @@ class LogBox(QtWidgets.QPlainTextEdit):
                 font: 10.5pt "Consolas";
             }
         """)
+        self._last_line = None  # store last printed line
 
     def append_line(self, text: str):
+        if text == self._last_line:
+            return  # skip duplicate
+        self._last_line = text
         self.appendPlainText(text)
         self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
