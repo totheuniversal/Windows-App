@@ -21,6 +21,10 @@ import json
 import ctypes
 import subprocess
 from PySide6 import QtCore, QtGui, QtWidgets
+from sfc_tab import SFCTab
+from fluent_widgets import FluentButton, LogBox
+from dism_tab import DISMTab
+
 
 APP_TITLE = "Audio Driver Manager — Fluent"
 IS_WINDOWS = (os.name == "nt")
@@ -253,6 +257,9 @@ class DevicesTable(QtWidgets.QTableWidget):
             self.setItem(row, 2, QtWidgets.QTableWidgetItem(d.get("Class","")))
             self.setItem(row, 3, QtWidgets.QTableWidgetItem(d.get("InstanceId","")))
 
+
+
+
 # ---- Main Window ----
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -262,8 +269,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setMinimumSize(820, 520)
         self.setWindowIcon(self.style().standardIcon(QtWidgets.QStyle.SP_MediaVolume))
 
-        central = QtWidgets.QWidget(self)
+        # ---------------- Tabs ----------------
+        tabs = QtWidgets.QTabWidget()
+        central = QtWidgets.QWidget()
+        central_layout = QtWidgets.QVBoxLayout(central)
+        central_layout.addWidget(tabs)
         self.setCentralWidget(central)
+
+        # ---- Tab 1: Audio Manager ----
+        audio_tab = QtWidgets.QWidget()
+        tabs.addTab(audio_tab, "Audio Manager")
 
         title = QtWidgets.QLabel("Audio Driver Manager")
         title.setStyleSheet('font: 700 18pt "Segoe UI"; margin-bottom: 2px;')
@@ -287,7 +302,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.table = DevicesTable()
         self.log = LogBox()
 
-        # Layout
+        # Layout for Audio Manager tab
         top_row = QtWidgets.QHBoxLayout()
         top_row.setSpacing(10)
         top_row.addWidget(self.btn_refresh)
@@ -297,7 +312,7 @@ class MainWindow(QtWidgets.QMainWindow):
         top_row.addWidget(self.btn_admin)
         top_row.addWidget(self.chip)
 
-        v = QtWidgets.QVBoxLayout(central)
+        v = QtWidgets.QVBoxLayout(audio_tab)
         v.setContentsMargins(16, 16, 16, 16)
         v.setSpacing(10)
         v.addWidget(title)
@@ -305,6 +320,19 @@ class MainWindow(QtWidgets.QMainWindow):
         v.addLayout(top_row)
         v.addWidget(self.table, 3)
         v.addWidget(self.log, 2)
+
+        # ---- Tab 2: SFC/SCANNOW ----
+        from sfc_tab import SFCTab
+        self.sfc_tab = SFCTab()
+        tabs.addTab(self.sfc_tab, "SFC /SCANNOW")
+        self.dism_tab = DISMTab()
+        tabs.addTab(self.dism_tab, "DISM Tools")
+
+        # ---- Footer label ----
+        footer = QtWidgets.QLabel("This tool made by: NG. VAN HAN")
+        footer.setAlignment(QtCore.Qt.AlignCenter)
+        footer.setStyleSheet('font: 9pt "Segoe UI"; color: #666; margin-top: 6px;')
+        central_layout.addWidget(footer)
 
         # Try Mica on Win11
         if IS_WINDOWS:
@@ -317,7 +345,9 @@ class MainWindow(QtWidgets.QMainWindow):
         pal.setColor(QtGui.QPalette.Base, QtGui.QColor(255, 255, 255))
         self.setPalette(pal)
 
+        # Initial refresh
         self.on_refresh()
+
 
     def update_chip(self):
         admin = is_admin()
